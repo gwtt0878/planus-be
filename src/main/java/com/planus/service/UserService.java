@@ -7,16 +7,12 @@ import com.planus.dto.UserLoginRequestDto;
 import com.planus.entity.User;
 import com.planus.repository.UserRepository;
 
-import jakarta.servlet.http.HttpSession;
-
 @Service
 public class UserService {
     private final UserRepository userRepository;
-    private final HttpSession httpSession;
 
-    public UserService(UserRepository userRepository, HttpSession httpSession) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.httpSession = httpSession;
     }
 
     public User createUser(UserCreateRequestDto requestDto) {
@@ -36,7 +32,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public String login(UserLoginRequestDto requestDto) {
+    public Long login(UserLoginRequestDto requestDto) {
         User user = userRepository.findByEmail(requestDto.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이메일입니다."));
 
@@ -44,11 +40,6 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        return user.getId().toString();
-    }
-
-    public String logout() {
-        httpSession.invalidate();
-        return "Logout successful";
+        return user.getId();
     }
 }

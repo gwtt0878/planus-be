@@ -1,8 +1,12 @@
 package com.planus.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.planus.dto.ScheduleCreateRequestDto;
+import com.planus.dto.ScheduleListResponseDto;
+import com.planus.dto.ScheduleResponseDto;
 import com.planus.dto.ScheduleUpdateRequestDto;
 import com.planus.entity.Schedule;
 import com.planus.entity.User;
@@ -17,6 +21,17 @@ public class ScheduleService {
     public ScheduleService(ScheduleRepository scheduleRepository, UserRepository userRepository) {
         this.scheduleRepository = scheduleRepository;
         this.userRepository = userRepository;
+    }
+
+    public ScheduleListResponseDto getSchedules() {
+        List<Schedule> schedules = scheduleRepository.findAll();
+        return ScheduleListResponseDto.of(schedules);
+    }
+
+    public ScheduleResponseDto getSchedule(Long id) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
+        return ScheduleResponseDto.from(schedule);
     }
 
     public Schedule createSchedule(ScheduleCreateRequestDto requestDto, Long userId) {

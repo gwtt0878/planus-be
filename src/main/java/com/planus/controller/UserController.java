@@ -1,5 +1,8 @@
 package com.planus.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,11 +20,9 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/user")
 public class UserController {
     private final UserService userService;
-    private final HttpSession httpSession;
 
-    public UserController(UserService userService, HttpSession httpSession) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.httpSession = httpSession;
     }
 
     @PostMapping("/register")
@@ -31,16 +32,21 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody UserLoginRequestDto requestDto) {
-        String id = userService.login(requestDto);
+    public ResponseEntity<Map<String, Object>> login(@RequestBody UserLoginRequestDto requestDto,
+            HttpSession httpSession) {
+        Long id = userService.login(requestDto);
         httpSession.setAttribute("userId", id);
 
-        return ResponseEntity.ok().body("로그인 성공");
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "로그인 성공");
+        response.put("userId", id);
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout() {
-        userService.logout();
+    public ResponseEntity<String> logout(HttpSession httpSession) {
+        httpSession.invalidate();
         return ResponseEntity.ok().body("로그아웃 성공");
     }
 }
