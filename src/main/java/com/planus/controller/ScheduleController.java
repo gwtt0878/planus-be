@@ -18,6 +18,7 @@ import com.planus.dto.ScheduleUpdateRequestDto;
 import com.planus.service.ScheduleService;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/schedule")
@@ -42,7 +43,7 @@ public class ScheduleController {
 
     @PostMapping()
     public ResponseEntity<ScheduleModifiedResponseDto> createSchedule(
-            @RequestBody ScheduleCreateRequestDto requestDto,
+            @Valid @RequestBody ScheduleCreateRequestDto requestDto,
             HttpSession httpSession) {
         Long userId = (Long) httpSession.getAttribute("userId");
         scheduleService.createSchedule(requestDto, userId);
@@ -56,7 +57,7 @@ public class ScheduleController {
     @PutMapping("/{id}")
     public ResponseEntity<ScheduleModifiedResponseDto> updateSchedule(
             @PathVariable Long id,
-            @RequestBody ScheduleUpdateRequestDto requestDto,
+            @Valid @RequestBody ScheduleUpdateRequestDto requestDto,
             HttpSession httpSession) {
         Long userId = (Long) httpSession.getAttribute("userId");
         scheduleService.updateSchedule(id, requestDto, userId);

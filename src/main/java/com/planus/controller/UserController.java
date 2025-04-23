@@ -15,6 +15,7 @@ import com.planus.entity.User;
 import com.planus.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/user")
@@ -26,13 +27,13 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> createUser(@RequestBody UserCreateRequestDto requestDto) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody UserCreateRequestDto requestDto) {
         User user = userService.createUser(requestDto);
         return ResponseEntity.ok().body(user);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody UserLoginRequestDto requestDto,
+    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody UserLoginRequestDto requestDto,
             HttpSession httpSession) {
         Long id = userService.login(requestDto);
         httpSession.setAttribute("userId", id);

@@ -18,7 +18,6 @@ import java.util.NoSuchElementException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -60,7 +59,6 @@ public class ScheduleControllerTest {
         }
 
         @Test
-        @Order(1)
         @DisplayName("일정 조회 테스트")
         public void testGetSchedules() throws Exception {
                 ScheduleResponseDto scheduleResponseDto = ScheduleResponseDto.builder()
@@ -92,7 +90,6 @@ public class ScheduleControllerTest {
         }
 
         @Test
-        @Order(2)
         @DisplayName("일정 생성 테스트")
         public void testCreateSchedule() throws Exception {
                 ScheduleCreateRequestDto scheduleCreateRequestDto = ScheduleCreateRequestDto.builder()
@@ -112,7 +109,6 @@ public class ScheduleControllerTest {
         }
 
         @Test
-        @Order(3)
         @DisplayName("일정 수정 테스트")
         public void testUpdateSchedule() throws Exception {
                 ScheduleUpdateRequestDto scheduleUpdateRequestDto = ScheduleUpdateRequestDto.builder()
@@ -132,8 +128,7 @@ public class ScheduleControllerTest {
         }
 
         @Test
-        @Order(4)
-        @DisplayName("일정 수정 테스트 실패")
+        @DisplayName("일정 수정 테스트 실패 - 다른 유저가 시도할 때")
         public void testUpdateScheduleWithInvalidUser() throws Exception {
                 session.setAttribute("userId", 2L);
                 ScheduleUpdateRequestDto scheduleUpdateRequestDto = ScheduleUpdateRequestDto.builder()
@@ -155,8 +150,7 @@ public class ScheduleControllerTest {
         }
 
         @Test
-        @Order(5)
-        @DisplayName("일정 삭제 테스트 실패")
+        @DisplayName("일정 삭제 테스트 실패 - 다른 유저가 시도할 때")
         public void testDeleteScheduleWithInvalidUser() throws Exception {
                 session.setAttribute("userId", 2L);
                 doThrow(new IllegalArgumentException("일정을 삭제할 권한이 없습니다."))
@@ -170,7 +164,6 @@ public class ScheduleControllerTest {
         }
 
         @Test
-        @Order(6)
         @DisplayName("일정 삭제 테스트")
         public void testDeleteSchedule() throws Exception {
                 doNothing().when(scheduleService).deleteSchedule(1L, 1L);
@@ -182,8 +175,7 @@ public class ScheduleControllerTest {
         }
 
         @Test
-        @Order(7)
-        @DisplayName("일정 삭제 테스트 실패")
+        @DisplayName("일정 삭제 테스트 실패 - 존재하지 않는 일정")
         public void testDeleteScheduleWithInvalidId() throws Exception {
                 doThrow(new NoSuchElementException("일정을 찾을 수 없습니다."))
                                 .when(scheduleService)
@@ -192,5 +184,22 @@ public class ScheduleControllerTest {
                 mockMvc.perform(delete("/schedule/999")
                                 .session(session))
                                 .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("입력 DTO 검증 - 과거 일정")
+        public void testCreateScheduleWithPreviousDate() throws Exception {
+                ScheduleCreateRequestDto scheduleCreateRequestDto = ScheduleCreateRequestDto.builder()
+                                .title("testSchedule")
+                                .description("testDescription")
+                                .meetingDateTime(LocalDateTime.now().minusDays(1))
+                                .meetingPlace("testPlace")
+                                .build();
+
+                mockMvc.perform(post("/schedule")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(scheduleCreateRequestDto))
+                                .session(session))
+                                .andExpect(status().isBadRequest());
         }
 }
