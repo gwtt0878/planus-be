@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.planus.dto.ScheduleCreateRequestDto;
 import com.planus.dto.ScheduleListResponseDto;
+import com.planus.dto.ScheduleModifiedResponseDto;
 import com.planus.dto.ScheduleResponseDto;
 import com.planus.dto.ScheduleUpdateRequestDto;
-import com.planus.entity.Schedule;
 import com.planus.service.ScheduleService;
 
 import jakarta.servlet.http.HttpSession;
@@ -41,28 +41,40 @@ public class ScheduleController {
     }
 
     @PostMapping()
-    public ResponseEntity<Schedule> createSchedule(
+    public ResponseEntity<ScheduleModifiedResponseDto> createSchedule(
             @RequestBody ScheduleCreateRequestDto requestDto,
             HttpSession httpSession) {
         Long userId = (Long) httpSession.getAttribute("userId");
-        Schedule schedule = scheduleService.createSchedule(requestDto, userId);
-        return ResponseEntity.ok().body(schedule);
+        scheduleService.createSchedule(requestDto, userId);
+
+        ScheduleModifiedResponseDto scheduleModifiedResponseDto = ScheduleModifiedResponseDto.builder()
+                .message("일정 생성 성공").build();
+
+        return ResponseEntity.ok().body(scheduleModifiedResponseDto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Schedule> updateSchedule(
+    public ResponseEntity<ScheduleModifiedResponseDto> updateSchedule(
             @PathVariable Long id,
             @RequestBody ScheduleUpdateRequestDto requestDto,
             HttpSession httpSession) {
         Long userId = (Long) httpSession.getAttribute("userId");
-        Schedule schedule = scheduleService.updateSchedule(id, requestDto, userId);
-        return ResponseEntity.ok().body(schedule);
+        scheduleService.updateSchedule(id, requestDto, userId);
+
+        ScheduleModifiedResponseDto scheduleModifiedResponseDto = ScheduleModifiedResponseDto.builder()
+                .message("일정 수정 성공").build();
+
+        return ResponseEntity.ok().body(scheduleModifiedResponseDto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteSchedule(@PathVariable Long id, HttpSession httpSession) {
+    public ResponseEntity<ScheduleModifiedResponseDto> deleteSchedule(@PathVariable Long id, HttpSession httpSession) {
         Long userId = (Long) httpSession.getAttribute("userId");
         scheduleService.deleteSchedule(id, userId);
-        return ResponseEntity.ok().body("일정 삭제 성공");
+
+        ScheduleModifiedResponseDto scheduleModifiedResponseDto = ScheduleModifiedResponseDto.builder()
+                .message("일정 삭제 성공").build();
+
+        return ResponseEntity.ok().body(scheduleModifiedResponseDto);
     }
 }

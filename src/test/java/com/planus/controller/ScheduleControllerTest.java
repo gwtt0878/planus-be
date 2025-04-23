@@ -1,24 +1,46 @@
 package com.planus.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.planus.common.exception.GlobalExceptionHandler;
+import com.planus.dto.ScheduleCreateRequestDto;
 import com.planus.dto.ScheduleListResponseDto;
 import com.planus.dto.ScheduleResponseDto;
+import com.planus.dto.ScheduleUpdateRequestDto;
 import com.planus.service.ScheduleService;
 
 @WebMvcTest(ScheduleController.class)
+@Import(GlobalExceptionHandler.class)
+@ExtendWith(MockitoExtension.class)
 public class ScheduleControllerTest {
         @Autowired
         private MockMvc mockMvc;
@@ -26,7 +48,20 @@ public class ScheduleControllerTest {
         @MockitoBean
         private ScheduleService scheduleService;
 
+        @Autowired
+        private ObjectMapper objectMapper;
+
+        protected MockHttpSession session;
+
+        @BeforeEach
+        public void setUp() {
+                session = new MockHttpSession();
+                session.setAttribute("userId", 1L);
+        }
+
         @Test
+        @Order(1)
+        @DisplayName("일정 조회 테스트")
         public void testGetSchedules() throws Exception {
                 ScheduleResponseDto scheduleResponseDto = ScheduleResponseDto.builder()
                                 .id(1L)
@@ -54,5 +89,108 @@ public class ScheduleControllerTest {
                                 .andExpect(jsonPath("schedules[0].meetingPlace").value("testPlace"))
                                 .andExpect(jsonPath("schedules[0].title").value("testSchedule"))
                                 .andExpect(jsonPath("schedules[0].description").value("testDescription"));
+        }
+
+        @Test
+        @Order(2)
+        @DisplayName("일정 생성 테스트")
+        public void testCreateSchedule() throws Exception {
+                ScheduleCreateRequestDto scheduleCreateRequestDto = ScheduleCreateRequestDto.builder()
+                                .title("testSchedule")
+                                .description("testDescription")
+                                .meetingDateTime(LocalDateTime.now().plusDays(1))
+                                .meetingPlace("testPlace")
+                                .build();
+
+                doNothing().when(scheduleService).createSchedule(any(ScheduleCreateRequestDto.class), eq(1L));
+
+                mockMvc.perform(post("/schedule")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(scheduleCreateRequestDto))
+                                .session(session))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        @Order(3)
+        @DisplayName("일정 수정 테스트")
+        public void testUpdateSchedule() throws Exception {
+                ScheduleUpdateRequestDto scheduleUpdateRequestDto = ScheduleUpdateRequestDto.builder()
+                                .title("updatedSchedule")
+                                .description("updatedDescription")
+                                .meetingDateTime(LocalDateTime.now().plusDays(2))
+                                .meetingPlace("updatedPlace")
+                                .build();
+
+                doNothing().when(scheduleService).updateSchedule(eq(1L), any(ScheduleUpdateRequestDto.class), eq(1L));
+
+                mockMvc.perform(put("/schedule/1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(scheduleUpdateRequestDto))
+                                .session(session))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        @Order(4)
+        @DisplayName("일정 수정 테스트 실패")
+        public void testUpdateScheduleWithInvalidUser() throws Exception {
+                session.setAttribute("userId", 2L);
+                ScheduleUpdateRequestDto scheduleUpdateRequestDto = ScheduleUpdateRequestDto.builder()
+                                .title("updatedSchedule")
+                                .description("updatedDescription")
+                                .meetingDateTime(LocalDateTime.now().plusDays(2))
+                                .meetingPlace("updatedPlace")
+                                .build();
+
+                doThrow(new IllegalArgumentException("일정을 수정할 권한이 없습니다."))
+                                .when(scheduleService)
+                                .updateSchedule(eq(1L), any(ScheduleUpdateRequestDto.class), eq(2L));
+
+                mockMvc.perform(put("/schedule/1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(scheduleUpdateRequestDto))
+                                .session(session))
+                                .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @Order(5)
+        @DisplayName("일정 삭제 테스트 실패")
+        public void testDeleteScheduleWithInvalidUser() throws Exception {
+                session.setAttribute("userId", 2L);
+                doThrow(new IllegalArgumentException("일정을 삭제할 권한이 없습니다."))
+                                .when(scheduleService)
+                                .deleteSchedule(1L, 2L);
+
+                mockMvc.perform(delete("/schedule/1")
+                                .session(session))
+                                .andExpect(status().isBadRequest());
+
+        }
+
+        @Test
+        @Order(6)
+        @DisplayName("일정 삭제 테스트")
+        public void testDeleteSchedule() throws Exception {
+                doNothing().when(scheduleService).deleteSchedule(1L, 1L);
+
+                mockMvc.perform(delete("/schedule/1")
+                                .session(session))
+                                .andExpect(status().isOk());
+
+        }
+
+        @Test
+        @Order(7)
+        @DisplayName("일정 삭제 테스트 실패")
+        public void testDeleteScheduleWithInvalidId() throws Exception {
+                doThrow(new NoSuchElementException("일정을 찾을 수 없습니다."))
+                                .when(scheduleService)
+                                .deleteSchedule(999L, 1L);
+
+                mockMvc.perform(delete("/schedule/999")
+                                .session(session))
+                                .andExpect(status().isNotFound());
         }
 }

@@ -1,7 +1,7 @@
 package com.planus.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
@@ -21,44 +21,34 @@ import com.planus.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class ScheduleServiceTest {
-    @Mock
-    private ScheduleRepository scheduleRepository;
+        @Mock
+        private ScheduleRepository scheduleRepository;
 
-    @Mock
-    private UserRepository userRepository;
+        @Mock
+        private UserRepository userRepository;
 
-    @InjectMocks
-    private ScheduleService scheduleService;
+        @InjectMocks
+        private ScheduleService scheduleService;
 
-    @Test
-    public void testCreateSchedule() {
-        User testUser = User.builder()
-                .nickname("testUser")
-                .email("test@test.com")
-                .password("testPassword")
-                .build();
+        @Test
+        public void testCreateSchedule() {
+                User testUser = User.builder()
+                                .nickname("testUser")
+                                .email("test@test.com")
+                                .password("testPassword")
+                                .build();
 
-        when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
+                when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
 
-        ScheduleCreateRequestDto requestDto = ScheduleCreateRequestDto.builder()
-                .title("testSchedule")
-                .description("testDescription")
-                .meetingDateTime(LocalDateTime.now().plusDays(1))
-                .meetingPlace("testPlace")
-                .build();
+                ScheduleCreateRequestDto requestDto = ScheduleCreateRequestDto.builder()
+                                .title("testSchedule")
+                                .description("testDescription")
+                                .meetingDateTime(LocalDateTime.now().plusDays(1))
+                                .meetingPlace("testPlace")
+                                .build();
 
-        Schedule schedule = Schedule.builder()
-                .title(requestDto.getTitle())
-                .description(requestDto.getDescription())
-                .meetingDateTime(requestDto.getMeetingDateTime())
-                .meetingPlace(requestDto.getMeetingPlace())
-                .creator(testUser)
-                .build();
+                scheduleService.createSchedule(requestDto, testUser.getId());
 
-        when(scheduleRepository.save(any(Schedule.class))).thenReturn(schedule);
-
-        Schedule savedSchedule = scheduleService.createSchedule(requestDto, testUser.getId());
-
-        assertThat(savedSchedule).isEqualTo(schedule);
-    }
+                verify(scheduleRepository).save(any(Schedule.class));
+        }
 }

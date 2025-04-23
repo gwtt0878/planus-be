@@ -34,7 +34,7 @@ public class ScheduleService {
         return ScheduleResponseDto.from(schedule);
     }
 
-    public Schedule createSchedule(ScheduleCreateRequestDto requestDto, Long userId) {
+    public void createSchedule(ScheduleCreateRequestDto requestDto, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
@@ -46,11 +46,11 @@ public class ScheduleService {
                 .creator(user)
                 .build();
 
-        return scheduleRepository.save(schedule);
+        scheduleRepository.save(schedule);
     }
 
-    public Schedule updateSchedule(Long id, ScheduleUpdateRequestDto requestDto, Long userId) {
-        Schedule schedule = scheduleRepository.findById(requestDto.getId())
+    public void updateSchedule(Long id, ScheduleUpdateRequestDto requestDto, Long userId) {
+        Schedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
 
         if (!schedule.getCreator().getId().equals(userId)) {
@@ -60,7 +60,7 @@ public class ScheduleService {
         schedule.update(requestDto.getTitle(), requestDto.getDescription(), requestDto.getMeetingDateTime(),
                 requestDto.getMeetingPlace());
 
-        return scheduleRepository.save(schedule);
+        scheduleRepository.save(schedule);
     }
 
     public void deleteSchedule(Long id, Long userId) {
