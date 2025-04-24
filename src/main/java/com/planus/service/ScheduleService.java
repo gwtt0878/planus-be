@@ -13,14 +13,20 @@ import com.planus.entity.User;
 import com.planus.repository.ScheduleRepository;
 import com.planus.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final UserRepository userRepository;
+    private final ScheduleMemberService scheduleMemberService;
 
-    public ScheduleService(ScheduleRepository scheduleRepository, UserRepository userRepository) {
+    public ScheduleService(ScheduleRepository scheduleRepository,
+            UserRepository userRepository,
+            ScheduleMemberService scheduleMemberService) {
         this.scheduleRepository = scheduleRepository;
         this.userRepository = userRepository;
+        this.scheduleMemberService = scheduleMemberService;
     }
 
     public ScheduleListResponseDto getSchedules() {
@@ -31,9 +37,13 @@ public class ScheduleService {
     public ScheduleResponseDto getSchedule(Long id) {
         Schedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
-        return ScheduleResponseDto.from(schedule);
+
+        List<User> members = scheduleMemberService.getMembers(id);
+
+        return ScheduleResponseDto.from(schedule, members);
     }
 
+    @Transactional
     public void createSchedule(ScheduleCreateRequestDto requestDto, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
@@ -46,9 +56,11 @@ public class ScheduleService {
                 .creator(user)
                 .build();
 
-        scheduleRepository.save(schedule);
+        Schedule tempSchedule = scheduleRepository.save(schedule);
+        scheduleMemberService.updateMembers(tempSchedule.getId(), requestDto.getMemberIds());
     }
 
+    @Transactional
     public void updateSchedule(Long id, ScheduleUpdateRequestDto requestDto, Long userId) {
         Schedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
@@ -60,7 +72,8 @@ public class ScheduleService {
         schedule.update(requestDto.getTitle(), requestDto.getDescription(), requestDto.getMeetingDateTime(),
                 requestDto.getMeetingPlace());
 
-        scheduleRepository.save(schedule);
+        Schedule tempSchedule = scheduleRepository.save(schedule);
+        scheduleMemberService.updateMembers(tempSchedule.getId(), requestDto.getMemberIds());
     }
 
     public void deleteSchedule(Long id, Long userId) {

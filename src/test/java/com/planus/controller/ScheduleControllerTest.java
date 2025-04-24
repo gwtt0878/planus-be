@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.planus.common.exception.GlobalExceptionHandler;
 import com.planus.dto.ScheduleCreateRequestDto;
 import com.planus.dto.ScheduleListResponseDto;
-import com.planus.dto.ScheduleResponseDto;
+import com.planus.dto.ScheduleListResponseDto.SimpleScheduleResponseDto;
 import com.planus.dto.ScheduleUpdateRequestDto;
 import com.planus.service.ScheduleService;
 
@@ -61,19 +61,17 @@ public class ScheduleControllerTest {
         @Test
         @DisplayName("일정 조회 테스트")
         public void testGetSchedules() throws Exception {
-                ScheduleResponseDto scheduleResponseDto = ScheduleResponseDto.builder()
+                SimpleScheduleResponseDto simpleScheduleResponseDto = SimpleScheduleResponseDto.builder()
                                 .id(1L)
                                 .title("testSchedule")
                                 .description("testDescription")
                                 .meetingDateTime(LocalDateTime.now().plusDays(1))
                                 .meetingPlace("testPlace")
                                 .creatorNickname("testUser")
-                                .createdAt(LocalDateTime.now())
-                                .updatedAt(LocalDateTime.now())
                                 .build();
 
                 ScheduleListResponseDto scheduleListResponseDto = ScheduleListResponseDto.builder()
-                                .schedules(Arrays.asList(scheduleResponseDto))
+                                .schedules(Arrays.asList(simpleScheduleResponseDto))
                                 .build();
 
                 when(scheduleService.getSchedules()).thenReturn(scheduleListResponseDto);

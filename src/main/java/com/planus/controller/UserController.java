@@ -1,16 +1,20 @@
 package com.planus.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.planus.dto.UserCreateRequestDto;
 import com.planus.dto.UserLoginRequestDto;
+import com.planus.dto.UserSearchResultResponseDto;
 import com.planus.entity.User;
 import com.planus.service.UserService;
 
@@ -26,6 +30,13 @@ public class UserController {
         this.userService = userService;
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<UserSearchResultResponseDto> searchUserByNickname(@RequestParam String nickname) {
+        List<User> users = userService.searchUserByNickname(nickname);
+        UserSearchResultResponseDto responseDto = UserSearchResultResponseDto.of(users);
+        return ResponseEntity.ok().body(responseDto);
+    }
+
     @PostMapping("/register")
     public ResponseEntity<User> createUser(@Valid @RequestBody UserCreateRequestDto requestDto) {
         User user = userService.createUser(requestDto);
@@ -35,12 +46,14 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody UserLoginRequestDto requestDto,
             HttpSession httpSession) {
-        Long id = userService.login(requestDto);
-        httpSession.setAttribute("userId", id);
+        User user = userService.login(requestDto);
+        httpSession.setAttribute("userId", user.getId());
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "로그인 성공");
-        response.put("userId", id);
+        response.put("userId", user.getId());
+        response.put("nickname", user.getNickname());
+        response.put("email", user.getEmail());
 
         return ResponseEntity.ok(response);
     }

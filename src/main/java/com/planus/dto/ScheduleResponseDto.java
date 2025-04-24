@@ -1,8 +1,11 @@
 package com.planus.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.planus.entity.Schedule;
+import com.planus.entity.User;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -18,8 +21,10 @@ public class ScheduleResponseDto {
     private String creatorNickname;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<UserInfoDto> members;
 
-    public static ScheduleResponseDto from(Schedule schedule) {
+    public static ScheduleResponseDto from(Schedule schedule, List<User> members) {
+
         return ScheduleResponseDto.builder()
                 .id(schedule.getId())
                 .title(schedule.getTitle())
@@ -29,6 +34,7 @@ public class ScheduleResponseDto {
                 .creatorNickname(schedule.getCreator().getNickname())
                 .createdAt(schedule.getCreatedAt())
                 .updatedAt(schedule.getUpdatedAt())
+                .members(members.stream().map(UserInfoDto::from).collect(Collectors.toList()))
                 .build();
     }
 }

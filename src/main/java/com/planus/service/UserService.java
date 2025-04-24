@@ -1,5 +1,7 @@
 package com.planus.service;
 
+import java.util.List;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +37,11 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public Long login(UserLoginRequestDto requestDto) {
+    public List<User> searchUserByNickname(String nickname) {
+        return userRepository.findTop20ByNicknameContainingIgnoreCase(nickname);
+    }
+
+    public User login(UserLoginRequestDto requestDto) {
         User user = userRepository.findByEmail(requestDto.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이메일입니다."));
 
@@ -43,6 +49,6 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        return user.getId();
+        return user;
     }
 }

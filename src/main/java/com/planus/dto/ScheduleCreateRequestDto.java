@@ -1,6 +1,7 @@
 package com.planus.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -28,4 +29,7 @@ public class ScheduleCreateRequestDto {
 
     @NotBlank(message = "미팅 장소는 필수 입력 항목입니다.")
     private String meetingPlace;
+
+    @NotNull(message = "멤버 목록은 필수 입력 항목입니다.")
+    private List<Long> memberIds;
 }

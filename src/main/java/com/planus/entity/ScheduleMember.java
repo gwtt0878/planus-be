@@ -8,10 +8,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ScheduleMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,4 +31,11 @@ public class ScheduleMember {
 
     @Enumerated(EnumType.STRING)
     private ScheduleMemberStatus status;
+
+    @Builder
+    public ScheduleMember(Schedule schedule, User user, ScheduleMemberStatus status) {
+        this.schedule = schedule;
+        this.user = user;
+        this.status = status;
+    }
 }
