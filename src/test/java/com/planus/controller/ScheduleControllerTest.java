@@ -33,8 +33,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.planus.common.exception.GlobalExceptionHandler;
 import com.planus.dto.ScheduleCreateRequestDto;
 import com.planus.dto.ScheduleListResponseDto;
-import com.planus.dto.ScheduleListResponseDto.SimpleScheduleResponseDto;
 import com.planus.dto.ScheduleUpdateRequestDto;
+import com.planus.dto.SimpleScheduleResponseDto;
 import com.planus.service.ScheduleService;
 
 @WebMvcTest(ScheduleController.class)

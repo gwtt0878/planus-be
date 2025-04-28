@@ -1,6 +1,7 @@
 package com.planus.service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -52,8 +53,22 @@ public class ScheduleMemberService {
             throw new IllegalArgumentException("존재하지 않는 유저가 있습니다. : " + notFoundMemberIdsString);
         }
 
-        for (User member : members) {
-            scheduleMemberRepository.save(ScheduleMember.builder().schedule(schedule).user(member).build());
-        }
+        List<ScheduleMember> existingMembers = scheduleMemberRepository.findAllByScheduleId(scheduleId);
+
+        Set<Long> existingMemberIds = existingMembers.stream().map(ScheduleMember::getUser).map(User::getId)
+                .collect(Collectors.toSet());
+        Set<Long> newMemberIds = members.stream().map(User::getId).collect(Collectors.toSet());
+
+        List<ScheduleMember> membersToAdd = members.stream()
+                .filter(member -> !existingMemberIds.contains(member.getId()))
+                .map(member -> ScheduleMember.builder().schedule(schedule).user(member).build())
+                .collect(Collectors.toList());
+
+        List<ScheduleMember> membersToRemove = existingMembers.stream()
+                .filter(member -> !newMemberIds.contains(member.getUser().getId()))
+                .collect(Collectors.toList());
+
+        scheduleMemberRepository.saveAll(membersToAdd);
+        scheduleMemberRepository.deleteAll(membersToRemove);
     }
 }
