@@ -11,13 +11,22 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
+    @Value("${cors.allowed-methods}")
+    private String allowedMethods;
+
+    @Value("${cors.allowed-headers}")
+    private String allowedHeaders;
+
+    @Value("${cors.max-age}")
+    private Long maxAge;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(allowedOrigins)
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
+                .allowedMethods(allowedMethods)
+                .allowedHeaders(allowedHeaders)
                 .allowCredentials(true)
-                .maxAge(3600);
+                .maxAge(maxAge);
     }
 }
