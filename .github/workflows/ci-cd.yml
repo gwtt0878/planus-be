@@ -46,15 +46,23 @@ jobs:
 
     steps:
       - name: Kill existing Spring Boot app
-        run: |
-          ssh -i "${{ secrets.EC2_KEY }}" ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} -p ${{ secrets.EC2_PORT }} <<EOF
-          cd /home/ubuntu/planus-prod
-          pkill -f 'java -jar' || true
-          EOF
+         uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          port: ${{ secrets.EC2_PORT }}
+          script: |
+            pkill -f 'java -jar' || true
 
-      - name: Start Spring Boot app
-        run: |
-          ssh -i "${{ secrets.EC2_KEY }}" ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} -p ${{ secrets.EC2_PORT }} <<EOF
-          cd /home/ubuntu/planus-prod
-          nohup java -jar *.jar > nohup.out 2>nohup.err < /dev/null &
-          EOF
+
+      - name: SSH and restart Spring Boot app
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          port: ${{ secrets.EC2_PORT }}
+          script: |
+            cd /home/ubuntu/planus-prod
+            nohup java -jar *.jar > nohup.out 2>nohup.err < /dev/null &
