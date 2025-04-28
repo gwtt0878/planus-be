@@ -51,6 +51,4 @@ jobs:
           script: |
             cd /home/ubuntu/planus-prod
             pkill -f 'java -jar' || true
-            nohup java -jar *.jar > app.log 2>&1 &
-            sleep 15
-            exit 0
+            nohup java -jar *.jar > nohup.out 2>nohup.err < /dev/null &
