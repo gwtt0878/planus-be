@@ -19,11 +19,10 @@ jobs:
           distribution: "corretto"
           java-version: "17"
 
-      - name: Create backend application.yml
+      - name: Create application.yml
         run: |
-          mkdir -p backend/src/main/resources
-          echo "${{ secrets.BACKEND_APP_YML }}" > backend/src/main/resources/application.yml
-          echo "${{ secrets.BACKEND_APP_PROD_YML }}" > backend/src/main/resources/application-prod.yml
+          echo "${{ secrets.BACKEND_APP_YML }}" > ./src/main/resources/application.yml
+          echo "${{ secrets.BACKEND_APP_PROD_YML }}" > ./src/main/resources/application-prod.yml
 
       - name: chmod gradlew
         run: chmod +x ./gradlew
