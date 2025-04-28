@@ -53,7 +53,10 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           port: ${{ secrets.EC2_PORT }}
           script: |
-            pkill -f 'java -jar' || true
+            PID=$(sudo lsof -t -i:8080)
+            if [ -n "$PID" ]; then
+              sudo kill $PID
+            fi
 
       - name: SSH and restart Spring Boot app
         uses: appleboy/ssh-action@v1.0.0
