@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: Kill existing Spring Boot app
-         uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -54,7 +54,6 @@ jobs:
           port: ${{ secrets.EC2_PORT }}
           script: |
             pkill -f 'java -jar' || true
-
 
       - name: SSH and restart Spring Boot app
         uses: appleboy/ssh-action@v1.0.0
