@@ -14,20 +14,14 @@ import com.planus.repository.ScheduleRepository;
 import com.planus.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final UserRepository userRepository;
     private final ScheduleMemberService scheduleMemberService;
-
-    public ScheduleService(ScheduleRepository scheduleRepository,
-            UserRepository userRepository,
-            ScheduleMemberService scheduleMemberService) {
-        this.scheduleRepository = scheduleRepository;
-        this.userRepository = userRepository;
-        this.scheduleMemberService = scheduleMemberService;
-    }
 
     public ScheduleListResponseDto getSchedules() {
         List<Schedule> schedules = scheduleRepository.findAll();

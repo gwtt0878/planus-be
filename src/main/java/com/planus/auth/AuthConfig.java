@@ -1,4 +1,4 @@
-package com.planus.config;
+package com.planus.auth;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

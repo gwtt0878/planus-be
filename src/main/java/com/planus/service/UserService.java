@@ -10,15 +10,13 @@ import com.planus.dto.UserLoginRequestDto;
 import com.planus.entity.User;
 import com.planus.repository.UserRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     public User createUser(UserCreateRequestDto requestDto) {
         if (userRepository.findByEmail(requestDto.getEmail()).isPresent()) {
@@ -39,6 +37,11 @@ public class UserService {
 
     public List<User> searchUserByNickname(String nickname) {
         return userRepository.findTop20ByNicknameContainingIgnoreCase(nickname);
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이메일입니다."));
     }
 
     public User login(UserLoginRequestDto requestDto) {

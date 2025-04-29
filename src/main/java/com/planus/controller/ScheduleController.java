@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.planus.auth.UserContext;
+import com.planus.common.annotations.LoginRequired;
 import com.planus.dto.ScheduleCreateRequestDto;
 import com.planus.dto.ScheduleListResponseDto;
 import com.planus.dto.ScheduleModifiedResponseDto;
@@ -17,17 +19,14 @@ import com.planus.dto.ScheduleResponseDto;
 import com.planus.dto.ScheduleUpdateRequestDto;
 import com.planus.service.ScheduleService;
 
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/schedule")
+@RequiredArgsConstructor
 public class ScheduleController {
     private final ScheduleService scheduleService;
-
-    public ScheduleController(ScheduleService scheduleService) {
-        this.scheduleService = scheduleService;
-    }
 
     @GetMapping()
     public ResponseEntity<ScheduleListResponseDto> getSchedules() {
@@ -42,10 +41,10 @@ public class ScheduleController {
     }
 
     @PostMapping()
+    @LoginRequired
     public ResponseEntity<ScheduleModifiedResponseDto> createSchedule(
-            @Valid @RequestBody ScheduleCreateRequestDto requestDto,
-            HttpSession httpSession) {
-        Long userId = (Long) httpSession.getAttribute("userId");
+            @Valid @RequestBody ScheduleCreateRequestDto requestDto) {
+        Long userId = UserContext.getUserId();
         scheduleService.createSchedule(requestDto, userId);
 
         ScheduleModifiedResponseDto scheduleModifiedResponseDto = ScheduleModifiedResponseDto.builder()
@@ -55,11 +54,11 @@ public class ScheduleController {
     }
 
     @PutMapping("/{id}")
+    @LoginRequired
     public ResponseEntity<ScheduleModifiedResponseDto> updateSchedule(
             @PathVariable Long id,
-            @Valid @RequestBody ScheduleUpdateRequestDto requestDto,
-            HttpSession httpSession) {
-        Long userId = (Long) httpSession.getAttribute("userId");
+            @Valid @RequestBody ScheduleUpdateRequestDto requestDto) {
+        Long userId = UserContext.getUserId();
         scheduleService.updateSchedule(id, requestDto, userId);
 
         ScheduleModifiedResponseDto scheduleModifiedResponseDto = ScheduleModifiedResponseDto.builder()
@@ -69,8 +68,9 @@ public class ScheduleController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ScheduleModifiedResponseDto> deleteSchedule(@PathVariable Long id, HttpSession httpSession) {
-        Long userId = (Long) httpSession.getAttribute("userId");
+    @LoginRequired
+    public ResponseEntity<ScheduleModifiedResponseDto> deleteSchedule(@PathVariable Long id) {
+        Long userId = UserContext.getUserId();
         scheduleService.deleteSchedule(id, userId);
 
         ScheduleModifiedResponseDto scheduleModifiedResponseDto = ScheduleModifiedResponseDto.builder()

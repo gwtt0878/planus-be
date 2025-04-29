@@ -1,9 +1,9 @@
 package com.planus.controller;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.planus.auth.JwtUtil;
+import com.planus.auth.UserContext;
+import com.planus.common.annotations.LoginRequired;
 import com.planus.dto.UserCreateRequestDto;
 import com.planus.dto.UserDetailResponseDto;
 import com.planus.dto.UserLoginRequestDto;
@@ -20,17 +23,17 @@ import com.planus.dto.UserSearchResultResponseDto;
 import com.planus.entity.User;
 import com.planus.service.UserService;
 
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/user")
+@RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @GetMapping("/search")
     public ResponseEntity<UserSearchResultResponseDto> searchUserByNickname(@RequestParam String nickname) {
@@ -40,35 +43,31 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> createUser(@Valid @RequestBody UserCreateRequestDto requestDto) {
-        User user = userService.createUser(requestDto);
-        return ResponseEntity.ok().body(user);
+    public ResponseEntity<String> createUser(@Valid @RequestBody UserCreateRequestDto requestDto) {
+        userService.createUser(requestDto);
+        return ResponseEntity.ok().body("회원가입 성공");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody UserLoginRequestDto requestDto,
-            HttpSession httpSession) {
+    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody UserLoginRequestDto requestDto) {
         User user = userService.login(requestDto);
-        httpSession.setAttribute("userId", user.getId());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "로그인 성공");
-        response.put("userId", user.getId());
-        response.put("nickname", user.getNickname());
-        response.put("email", user.getEmail());
+        String token = jwtUtil.createUserToken(user);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of("token", token));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpSession httpSession) {
-        httpSession.invalidate();
+    @LoginRequired
+    public ResponseEntity<String> logout() {
+        UserContext.clearUserId();
         return ResponseEntity.ok().body("로그아웃 성공");
     }
 
     @GetMapping("/myinfo")
-    public ResponseEntity<UserDetailResponseDto> getMyInfo(HttpSession httpSession) {
-        Long userId = (Long) httpSession.getAttribute("userId");
+    @LoginRequired
+    public ResponseEntity<UserDetailResponseDto> getMyInfo() {
+        Long userId = UserContext.getUserId();
         User user = userService.getUser(userId);
         UserDetailResponseDto responseDto = UserDetailResponseDto.from(user);
 
