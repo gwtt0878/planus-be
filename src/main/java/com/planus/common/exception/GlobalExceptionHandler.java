@@ -1,6 +1,7 @@
 package com.planus.common.exception;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -42,8 +43,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleNeedNicknameException(NeedNicknameException e) {
         log.error("NeedNicknameException", e);
         HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(URI.create(clientHost + "/register/google?email=" + e.getMessage()));
 
+        if (e.getMessage().equals("이미 존재하는 닉네임입니다.")) {
+            Map<String, String> body = new HashMap<>();
+            body.put("tempToken", e.getTempToken());
+            body.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        }
+
+        headers.setLocation(URI.create(clientHost + "/register/google?email=" + e.getEmail() + "&tempToken="
+                + e.getTempToken()));
         return ResponseEntity.status(HttpStatus.FOUND).headers(headers).build();
     }
 

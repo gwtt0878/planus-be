@@ -36,6 +36,18 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String createTempToken(String email) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + 5 * 60 * 1000);
+
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .compact();
+    }
+
     public Claims getClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(SECRET_KEY)
