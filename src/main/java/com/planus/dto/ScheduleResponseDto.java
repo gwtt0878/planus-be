@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.planus.entity.Schedule;
-import com.planus.entity.User;
+import com.planus.entity.ScheduleMember;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -21,10 +21,9 @@ public class ScheduleResponseDto {
     private String creatorNickname;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<UserInfoDto> members;
+    private List<ScheduleMemberInfoDto> members;
 
-    public static ScheduleResponseDto from(Schedule schedule, List<User> members) {
-
+    public static ScheduleResponseDto from(Schedule schedule, List<ScheduleMember> members) {
         return ScheduleResponseDto.builder()
                 .id(schedule.getId())
                 .title(schedule.getTitle())
@@ -34,7 +33,7 @@ public class ScheduleResponseDto {
                 .creatorNickname(schedule.getCreator().getNickname())
                 .createdAt(schedule.getCreatedAt())
                 .updatedAt(schedule.getUpdatedAt())
-                .members(members.stream().map(UserInfoDto::from).collect(Collectors.toList()))
+                .members(members.stream().map(ScheduleMemberInfoDto::from).collect(Collectors.toList()))
                 .build();
     }
 }

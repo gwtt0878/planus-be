@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,12 +35,17 @@ public class ScheduleMember {
     private User user;
 
     @Enumerated(EnumType.STRING)
+    @NotNull
     private ScheduleMemberStatus status;
 
     @Builder
     public ScheduleMember(Schedule schedule, User user, ScheduleMemberStatus status) {
         this.schedule = schedule;
         this.user = user;
+        this.status = status;
+    }
+
+    public void updateStatus(ScheduleMemberStatus status) {
         this.status = status;
     }
 }

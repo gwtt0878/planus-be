@@ -9,6 +9,7 @@ import com.planus.dto.ScheduleListResponseDto;
 import com.planus.dto.ScheduleResponseDto;
 import com.planus.dto.ScheduleUpdateRequestDto;
 import com.planus.entity.Schedule;
+import com.planus.entity.ScheduleMember;
 import com.planus.entity.User;
 import com.planus.repository.ScheduleRepository;
 import com.planus.repository.UserRepository;
@@ -32,7 +33,7 @@ public class ScheduleService {
         Schedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
 
-        List<User> members = scheduleMemberService.getMembers(id);
+        List<ScheduleMember> members = scheduleMemberService.getMembers(id);
 
         return ScheduleResponseDto.from(schedule, members);
     }

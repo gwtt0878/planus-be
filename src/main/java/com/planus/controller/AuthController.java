@@ -33,91 +33,83 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
-    @Value("${google.client.id}")
-    private String googleClientId;
+        @Value("${google.client.id}")
+        private String googleClientId;
 
-    @Value("${google.client.secret}")
-    private String googleClientSecret;
+        @Value("${google.client.secret}")
+        private String googleClientSecret;
 
-    @Value("${google.client.redirect-uri}")
-    private String googleRedirectUri;
+        @Value("${google.client.redirect-uri}")
+        private String googleRedirectUri;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+        @Autowired
+        private JwtUtil jwtUtil;
 
-    @Value("${client.host}")
-    private String clientHost;
+        @Value("${client.host}")
+        private String clientHost;
 
-    private final AuthService authService;
+        private final AuthService authService;
 
-    @GetMapping("/login/google")
-    public ResponseEntity<String> login() {
-        String googleLoginUrl = "https://accounts.google.com/o/oauth2/v2/auth?client_id=" + googleClientId
-                + "&redirect_uri=" + googleRedirectUri + "&response_type=code&scope=openid%20email%20profile";
+        @GetMapping("/callback/google")
+        public ResponseEntity<Map<String, String>> callback(
+                        @RequestParam(required = false) String code,
+                        @RequestParam(required = false) String error) throws IOException {
 
-        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(googleLoginUrl)).build();
-    }
+                if (error != null) {
+                        return ResponseEntity.status(HttpStatus.FOUND)
+                                        .location(URI.create(clientHost + "/login"))
+                                        .build();
+                }
 
-    @GetMapping("/callback/google")
-    public ResponseEntity<Map<String, String>> callback(
-            @RequestParam(required = false) String code,
-            @RequestParam(required = false) String error) throws IOException {
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        if (error != null) {
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(clientHost + "/login"))
-                    .build();
+                MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+                body.add("code", code);
+                body.add("client_id", googleClientId);
+                body.add("client_secret", googleClientSecret);
+                body.add("redirect_uri", googleRedirectUri);
+                body.add("grant_type", "authorization_code");
+
+                HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+                RestTemplate restTemplate = new RestTemplate();
+                ResponseEntity<Map> response = restTemplate.postForEntity(
+                                "https://oauth2.googleapis.com/token",
+                                requestEntity,
+                                Map.class);
+
+                String accessToken = response.getBody().get("access_token").toString();
+
+                HttpHeaders userInfoHeaders = new HttpHeaders();
+                userInfoHeaders.setBearerAuth(accessToken);
+                userInfoHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+                HttpEntity<MultiValueMap<String, String>> userInfoRequestEntity = new HttpEntity<>(userInfoHeaders);
+
+                ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
+                                "https://www.googleapis.com/oauth2/v2/userinfo",
+                                HttpMethod.GET,
+                                userInfoRequestEntity,
+                                Map.class);
+
+                String email = userInfoResponse.getBody().get("email").toString();
+
+                User user = authService.login(email);
+
+                String token = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname());
+
+                return ResponseEntity.status(HttpStatus.FOUND)
+                                .location(URI.create(clientHost + "/login/oauth2redirect?token=" + token))
+                                .build();
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        @PostMapping("/nickname")
+        public ResponseEntity<String> setNicknameAndRegister(@RequestBody Map<String, String> request) {
+                String email = request.get("email");
+                String nickname = request.get("nickname");
 
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("code", code);
-        body.add("client_id", googleClientId);
-        body.add("client_secret", googleClientSecret);
-        body.add("redirect_uri", googleRedirectUri);
-        body.add("grant_type", "authorization_code");
+                authService.setNicknameAndRegister(email, nickname);
 
-        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<Map> response = restTemplate.postForEntity(
-                "https://oauth2.googleapis.com/token",
-                requestEntity,
-                Map.class);
-
-        String accessToken = response.getBody().get("access_token").toString();
-
-        HttpHeaders userInfoHeaders = new HttpHeaders();
-        userInfoHeaders.setBearerAuth(accessToken);
-        userInfoHeaders.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<MultiValueMap<String, String>> userInfoRequestEntity = new HttpEntity<>(userInfoHeaders);
-
-        ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
-                "https://www.googleapis.com/oauth2/v2/userinfo",
-                HttpMethod.GET,
-                userInfoRequestEntity,
-                Map.class);
-
-        String email = userInfoResponse.getBody().get("email").toString();
-
-        User user = authService.login(email);
-
-        String token = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname());
-
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(clientHost + "/login/oauth2redirect?token=" + token))
-                .build();
-    }
-
-    @PostMapping("/nickname")
-    public ResponseEntity<String> setNicknameAndRegister(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        String nickname = request.get("nickname");
-
-        authService.setNicknameAndRegister(email, nickname);
-
-        return ResponseEntity.ok("회원가입 성공");
-    }
+                return ResponseEntity.ok("회원가입 성공");
+        }
 }
