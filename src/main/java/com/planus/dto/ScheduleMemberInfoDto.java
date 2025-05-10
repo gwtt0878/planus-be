@@ -9,13 +9,13 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ScheduleMemberInfoDto {
-    private Long id;
+    private Long memberId;
     private String nickname;
     private ScheduleMemberStatus status;
 
     public static ScheduleMemberInfoDto from(ScheduleMember scheduleMember) {
         return ScheduleMemberInfoDto.builder()
-                .id(scheduleMember.getId())
+                .memberId(scheduleMember.getUser().getId())
                 .nickname(scheduleMember.getUser().getNickname())
                 .status(scheduleMember.getStatus())
                 .build();
